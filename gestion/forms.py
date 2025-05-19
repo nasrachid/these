@@ -38,8 +38,15 @@ class TheseForm(forms.ModelForm):
             'domaine': forms.Select(choices=These._meta.get_field('domaine').choices),
             'description': forms.Textarea(attrs={'rows': 3}),
             'motivation': forms.Textarea(attrs={'rows': 3}),
-            'encadreur': forms.Select(choices=[(u.id, u.nom) for u in Utilisateur.objects.filter(role='professeur')])
+            # ⚠️ Ne pas inclure 'encadreur' ici
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['encadreur'].widget = forms.Select(
+            choices=[(u.id, u.nom) for u in Utilisateur.objects.filter(role='professeur')]
+        )
+
 
  # Formulaire pour les commentaires du comité
 class CommentaireForm(forms.ModelForm):

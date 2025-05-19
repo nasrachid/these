@@ -900,13 +900,7 @@ def notifications_view(request):
         'nb_non_lues': nb_non_lues,
     })
     
-    from gestion.models import Notification
-notif = Notification.objects.filter(utilisateur__username='ayan')
-print(notif.count())
-for n in notif:
-    print(n.titre, n.message, n.commentaire)
-
-
+    
 
 # dans views.py
 

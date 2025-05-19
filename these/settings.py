@@ -75,12 +75,15 @@ WSGI_APPLICATION = 'these.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
+import os
+import dj_database_url
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    'default': dj_database_url.config(
+        default=f"postgresql://postgres:admin123@localhost:5432/these_db",
+        conn_max_age=600,
+        ssl_require=True
+    )
 }
 
 
@@ -141,3 +144,6 @@ DEFAULT_FROM_EMAIL = 'nasrarachid97@gmail.com'  # Adresse par défaut pour l'env
 
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+
+
