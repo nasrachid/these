@@ -1,0 +1,278 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Copie 0 - Liste des Thèses</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/tableau_theses_comite.css' %}">
+
+</head>
+<body>
+<div class="layout">
+    <!-- Sidebar améliorée -->
+    <aside class="sidebar">
+        <div class="logo-container">
+            <img src="{% static 'images/logo.png' %}" alt="Logo" onerror="this.src='https://via.placeholder.com/60'; this.onerror=null;">
+            <div class="logo-text">🎓 ThèseManager</div>
+        </div>
+        <ul class="menu">
+            <li class="menu-item">
+                <a href="{% url 'liste_soutenances' %}" class="menu-link">
+                    <span class="menu-icon"><i class="fas fa-home"></i></span>
+                    <span class="menu-title">Accueil</span>
+                </a>
+            </li>
+            <li class="menu-item">
+                <a href="{% url 'tableau_theses_comite' %}" class="menu-link active">
+                    <span class="menu-icon"><i class="fas fa-copy"></i></span>
+                    <span class="menu-title">Copie 0</span>
+                </a>
+            </li>
+            <li class="menu-item">
+                <a href="{% url 'rapport_inter' %}" class="menu-link">
+                    <span class="menu-icon"><i class="fas fa-file-alt"></i></span>
+                    <span class="menu-title">Rapport intermédiaire</span>
+                </a>
+            </li>
+            <li class="menu-item">
+                <a href="#" class="menu-link">
+                    <span class="menu-icon"><i class="fas fa-star"></i></span>
+                    <span class="menu-title">Évaluation</span>
+                </a>
+            </li>
+            <li class="menu-item">
+                <a href="#" class="menu-link">
+                    <span class="menu-icon"><i class="fas fa-users"></i></span>
+                    <span class="menu-title">Composition jury</span>
+                </a>
+            </li>
+            <li class="menu-item">
+                <a href="{% url 'deconnexion_etudiant' %}" class="menu-link">
+                    <span class="menu-icon"><i class="fas fa-sign-out-alt"></i></span>
+                    <span class="menu-title">Déconnexion</span>
+                </a>
+            </li>
+        </ul>
+    </aside>
+
+    <!-- Contenu principal -->
+    <main class="container">
+        <!-- Effet de vague décoratif en haut -->
+        <div class="wave-top">
+            <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none">
+                <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z" class="shape-fill"></path>
+            </svg>
+        </div>
+
+        <div class="card fade-in">
+            <div class="card-header">
+                <h2><i class="fas fa-copy"></i> Copie 0 - Liste des Thèses <span class="badge">({{ total_en_attente }} en attente)</span></h2>
+            </div>
+            <div class="card-body">
+                <form method="get" class="search-bar form-row">
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <input type="text" name="q" class="form-control" placeholder="Rechercher une thèse..." value="{{ request.GET.q }}">
+                    </div>
+                    <button type="submit" class="btn" style="width: auto; margin-left: 10px; padding: 15px 20px;">
+                        <i class="fas fa-search"></i> Rechercher
+                    </button>
+                </form>
+
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Titre</th>
+                                <th>Domaine</th>
+                                <th>Description</th>
+                                <th>Motivation</th>
+                                <th>Fichier</th>
+                                <th>Statut</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for these in page_obj %}
+                            <tr>
+                                <td>{{ these.titre }}</td>
+                                <td>{{ these.domaine }}</td>
+                                <td>{{ these.description }}</td>
+                                <td>{{ these.motivation }}</td>
+                                <td>
+    {% if these.fichier %}
+    <div style="display: flex; flex-direction: column; gap: 5px;">
+        <a href="{{ these.fichier.url }}" class="btn-download" target="_blank">
+            <i class="fas fa-file-download"></i> Télécharger
+        </a>
+        <button onclick="verifierPlagiat({{ these.id }})" class="btn-action">
+            <i class="fas fa-search"></i> Vérifier
+        </button>
+        
+    </div>
+    {% else %}
+        <span class="text-warning"><i class="fas fa-exclamation-triangle"></i> Pas de fichier</span>
+    {% endif %}
+</td>
+
+                                <td>
+                                    {% if these.statut == 'Approuvé' %}
+                                        <span class="status approved"><i class="fas fa-check-circle"></i> Approuvée</span>
+                                    {% elif these.statut == 'Rejeté' %}
+                                        <span class="status rejected"><i class="fas fa-times-circle"></i> Rejetée</span>
+                                    {% else %}
+                                        <span class="status pending"><i class="fas fa-clock"></i> En Attente</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if these.statut == 'En attente' %}
+                                    <div class="action-group">
+                                        <a href="{% url 'approuver_these' these.id %}" class="btn-action btn-approve">
+                                            <i class="fas fa-check"></i> Approuver
+                                        </a>
+                                        <button class="btn-action btn-reject" onclick="ouvrirModalRejet({{ these.id }})">
+                                            <i class="fas fa-times"></i> Rejeter
+                                        </button>
+                                    </div>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="pagination">
+                    {% if page_obj.has_previous %}
+                        <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}" class="btn-page">
+                            <i class="fas fa-chevron-left"></i> Précédent
+                        </a>
+                    {% endif %}
+                    <span class="current">Page {{ page_obj.number }} sur {{ page_obj.paginator.num_pages }}</span>
+                    {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}" class="btn-page">
+                            Suivant <i class="fas fa-chevron-right"></i>
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Effet de vague décoratif en bas -->
+        <div class="wave-bottom">
+            <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none">
+                <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z" class="shape-fill"></path>
+            </svg>
+        </div>
+    </main>
+</div>
+
+<!-- Popup Rejet -->
+<div id="modal-rejet" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="fermerModalRejet()">&times;</span>
+        <h3><i class="fas fa-times-circle"></i> Rejeter la thèse</h3>
+        <form method="post" id="form-rejet">
+            {% csrf_token %}
+            <input type="hidden" name="these_id" id="these-id">
+            <div class="form-group">
+                <label for="commentaire"><i class="fas fa-comment"></i> Commentaire de rejet :</label>
+                <textarea name="commentaire" id="commentaire" class="form-control" required></textarea>
+            </div>
+            <button type="button" class="btn" onclick="envoyerRejet()">
+                <i class="fas fa-paper-plane"></i> Envoyer
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Popup Plagiat -->
+<div id="overlay" class="overlay"></div>
+<div id="popup-plagiat" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="fermerPopupPlagiat()">&times;</span>
+    <h3><i class="fas fa-search"></i> Résultat de la vérification</h3>
+    <div id="contenu-plagiat" class="alert"></div>
+    <button type="button" class="close-btn" onclick="fermerPopupPlagiat()">
+      <i class="fas fa-times"></i> Fermer
+    </button>
+  </div>
+</div>
+
+
+<!-- N’oublie pas un overlay, sinon l’effet ne fonctionne pas bien -->
+
+
+<script>
+
+    window.verifierPlagiat = function(theseId) {
+    fetch(`/verifier_plagiat/${theseId}/`)
+        .then(response => response.json())
+        .then(data => {
+            const contenu = document.getElementById("contenu-plagiat");
+            if (data.plagiat) {
+                contenu.innerHTML = `<div style="color: #e74c3c; padding: 15px; background-color: rgba(231, 76, 60, 0.1); border-radius: 8px;"><i class="fas fa-times-circle"></i> Plagiat détecté ! Cette thèse ressemble à : <strong>${data.titre}</strong></div>`;
+            } else {
+                contenu.innerHTML = `<div style="color: #2ecc71; padding: 15px; background-color: rgba(46, 204, 113, 0.1); border-radius: 8px;"><i class="fas fa-check-circle"></i> Aucune similarité détectée !</div>`;
+            }
+            document.getElementById("popup-plagiat").classList.add("show");
+            document.getElementById("overlay").classList.add("show");
+        })
+        .catch(error => {
+            document.getElementById("contenu-plagiat").innerHTML = `<div style="color: #e74c3c; padding: 15px; background-color: rgba(231, 76, 60, 0.1); border-radius: 8px;"><i class="fas fa-exclamation-circle"></i> Erreur lors de la vérification.</div>`;
+            document.getElementById("popup-plagiat").classList.add("show");
+            document.getElementById("overlay").classList.add("show");
+        });
+};
+
+window.fermerPopupPlagiat = function() {
+    document.getElementById("popup-plagiat").classList.remove("show");
+    document.getElementById("overlay").classList.remove("show");
+};
+
+// Même chose pour les autres fonctions :
+window.ouvrirModalRejet = function(theseId) {
+    document.getElementById("these-id").value = theseId;
+    document.getElementById("modal-rejet").style.display = "block";
+};
+
+window.fermerModalRejet = function() {
+    document.getElementById("modal-rejet").style.display = "none";
+};
+
+window.envoyerRejet = function() {
+    const theseId = document.getElementById('these-id').value;
+    const commentaire = document.getElementById('commentaire').value;
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+    fetch(`/rejeter_these/${theseId}/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': csrfToken
+        },
+        body: new URLSearchParams({ commentaire: commentaire })
+    })
+    .then(response => {
+        if (response.ok) {
+            fermerModalRejet();
+            location.reload();
+        } else {
+            return response.text().then(text => {
+                console.error("Réponse serveur :", text);
+                alert("❌ Erreur lors de l'envoi du commentaire.");
+            });
+        }
+    })
+    .catch(error => {
+        console.error("Erreur réseau :", error);
+        alert("⚠️ Une erreur est survenue lors de la communication avec le serveur.");
+    });
+};
+
+
+</script>
+</body>
+</html>

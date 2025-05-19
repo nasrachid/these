@@ -1,0 +1,132 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Soumission du Rapport Intermédiaire</title>
+    <link rel="stylesheet" href="{% static 'css/css.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+</head>
+<body>
+    <!-- Menu vertical avec la structure requise par le CSS -->
+    <div class="sidebar">
+        <div class="logo-container">
+            <img src="{% static 'images/logo.png' %}" alt="Logo" onerror="this.src='/api/placeholder/60/60'; this.onerror=null;">
+            <span class="logo-text">Gestion de Thèse</span>
+        </div>
+        <ul class="menu">
+            <li class="menu-item">
+                <a href="{% url 'accueil_etudiant' %}" class="menu-link">
+                    <span class="menu-icon"><i class="fas fa-home"></i></span>
+                    <span class="menu-title">Accueil</span>
+                </a>
+            </li>
+            <li class="menu-item">
+                <a href="{% url 'copie_zero' %}" class="menu-link">
+                    <span class="menu-icon"><i class="fas fa-file-alt"></i></span>
+                    <span class="menu-title">Copie Zero</span>
+                </a>
+            </li>
+            <li class="menu-item">
+                <a href="{% url 'rapport_final' %}" class="menu-link">
+                    <span class="menu-icon"><i class="fas fa-clipboard-check"></i></span>
+                    <span class="menu-title">Rapport Final</span>
+                </a>
+            </li>
+            <li class="menu-item">
+                <a href="{% url 'notifications' %}" class="menu-link">
+                    <div class="menu-icon"><i class="fas fa-bell"></i></div>
+                    <span class="menu-title">Notifications</span>
+                </a>
+            </li>
+            <li class="menu-item">
+                <a href="{% url 'profil_etudiant' %}" class="menu-link">
+                    <span class="menu-icon"><i class="fas fa-user"></i></span>
+                    <span class="menu-title">Profil</span>
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    <div class="container">
+        <!-- Vagues décoratives -->
+        <div class="wave-top">
+            <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none">
+                <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z" class="shape-fill"></path>
+            </svg>
+        </div>
+
+        <div class="card fade-in">
+            <div class="card-header">
+                <img src="{% static 'images/logo.png' %}" alt="Photo de profil" class="profile-photo" onerror="this.src='/api/placeholder/70/70'; this.onerror=null;">
+                <div>
+                    <h2><i class="fas fa-file-alt"></i> Soumettre votre Rapport Intermédiaire</h2>
+                    <p>Complétez le formulaire ci-dessous pour soumettre votre rapport</p>
+                </div>
+            </div>
+
+            <div class="card-body">
+                {% if messages %}
+                <div class="fade-in">
+                    {% for message in messages %}
+                    <div class="warning-message" style="border-left-color: {% if message.tags == 'success' %}#48bb78{% elif message.tags == 'error' %}#f56565{% else %}#ecc94b{% endif %}; background-color: rgba(0,0,0,0.03);">
+                        <i class="fas {% if message.tags == 'success' %}fa-check-circle{% elif message.tags == 'error' %}fa-times-circle{% else %}fa-info-circle{% endif %}"></i>
+                        {{ message }}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                {% if not is_approved %}
+                <div class="warning-message">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span>Votre thèse n'a pas encore été approuvée par le comité. Vous ne pouvez pas soumettre le rapport intermédiaire pour le moment.</span>
+                </div>
+                {% endif %}
+
+                <form method="POST" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="titre"><i class="fas fa-heading"></i> Titre du rapport</label>
+                        <p style="font-weight: bold;">{{ these.titre }}</p>
+                        <div id="titre-message"></div>
+                    </div>
+
+                    <div class="form-group file-upload">
+                        <label for="fichier"><i class="fas fa-file-upload"></i> Joindre votre rapport (PDF)</label>
+                        <input type="file" id="fichier" name="fichier" class="form-control" {% if not is_approved %}disabled{% endif %} accept=".pdf">
+                    </div>
+
+                    <div class="form-group">
+                      <button id="submitBtn" type="submit" {% if rapport_existant %}disabled{% endif %}>Soumettre</button>
+                    </div>
+                </form>
+
+                <!-- Modal pour succès de soumission -->
+                <div id="notification-modal" class="modal" style="display: none;">
+                    <div class="modal-content">
+                        <div class="alert alert-success">
+                            <div class="icon"><i class="fas fa-check-circle"></i></div>
+                            <div class="message-text">Votre rapport a été soumis avec succès !</div>
+                        </div>
+                        <button class="close-btn" onclick="document.getElementById('notification-modal').style.display='none'">Fermer</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Accessibilité pour les lecteurs d’écran
+        document.querySelectorAll('input[disabled], button[disabled]').forEach(function (element) {
+            element.setAttribute('aria-disabled', 'true');
+        });
+
+        // Affichage automatique du modal en cas de succès
+        {% if submission_success %}
+        document.getElementById('notification-modal').style.display = 'block';
+        document.getElementById('submitBtn').disabled = true; // Désactive le bouton après la soumission
+        {% endif %}
+    </script>
+</body>
+</html>
